@@ -8,13 +8,15 @@ Options:
 def main(argv):
 	from getopt import getopt
 	topts = []
+	topts += [("h", "Show help")]
 	sopts = "".join(x for x, _ in topts)
 	opts, args = getopt(argv[1:], sopts)
 	show_help = False
 	if not args:
 		show_help = True
 	for k, v in opts:
-		pass
+		if k == "-h":
+			show_help = True
 	if show_help:
 		def _help(sopt, text):
 			v = ""
