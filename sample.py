@@ -7,7 +7,8 @@ Options:
 
 def main(argv):
 	from getopt import getopt
-	sopts = ""
+	topts = []
+	sopts = "".join(x for x, _ in topts)
 	opts, args = getopt(argv[1:], sopts)
 	show_help = False
 	if not args:
@@ -15,7 +16,15 @@ def main(argv):
 	for k, v in opts:
 		pass
 	if show_help:
-		print(__doc__ % argv[0])
+		def _help(sopt, text):
+			v = ""
+			if sopt[-1:] == ":":
+				v = "x"
+				l, r = text.find("<"), text.find(">")
+				if l >= 0 and l < r:
+					v = " " + text[l+1:r]
+			return "\t-" + sopt[0] + v + "\t" + text + "\n"
+		print(__doc__ % argv[0] + "".join(_help(*x) for x in topts))
 		return 1
 	return 0
 
