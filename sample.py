@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 def main(argv):
 	return 0
