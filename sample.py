@@ -52,6 +52,12 @@ def main(argv):
 	if ifname.lower() == ofname.lower():
 		print("Input and output files must be different")
 		return 2
+	ifp = open(ifname, "rt")
+	ofp = open(ofname, "wt")
+	for line in ifp:
+		ofp.write(line)
+	ifp.close()
+	ofp.close()
 	return 0
 
 if __name__ == "__main__":
