@@ -41,6 +41,7 @@ def main(argv):
 	from getopt import getopt
 	topts = []
 	topts += [("h", "Show help")]
+	topts += [("d", "Disable smart doc string processing")]
 	topts += [("t:", "Treat each existing tab as <n> spaces")]
 	topts += [("n:", "Convert <n> spaces to one tab (4)")]
 	topts += [("i:", "Convert inplace and move original to <d:e>")]
@@ -53,6 +54,7 @@ def main(argv):
 				if l >= 0 and l < r:
 					return val_type(text[l+1:r])
 	show_help = False
+	smart_doc = True
 	tab_space = 0
 	space_tab = _init("n")
 	move_dir, move_ext = None, None
@@ -61,6 +63,8 @@ def main(argv):
 	for k, v in opts:
 		if k == "-h":
 			show_help = True
+		elif k == "-d":
+			smart_doc = False
 		elif k == "-t":
 			tab_space = int(v)
 			if tab_space not in range(9):
@@ -109,27 +113,43 @@ def main(argv):
 	ifp = open(ifname, "rt")
 	ofp = open(ofname, "wt")
 	rp_indent = re.compile("^[ \t]+")
+	doc_strs = ('"' * 3, "'" * 3)
+	in_doc = None
 	tab_lines = []
 	space_lines = []
 	issue_lines = []
 	line_no = 0
 	for line in ifp:
 		line_no += 1
+		ndoc = sum([line.count(x) for x in doc_strs])
+		indent = ""
 		r = rp_indent.search(line)
 		if r:
 			indent = r.group(0)
 			remain = line[r.end():]
+		if smart_doc and in_doc:
+			if in_doc[0] and in_doc[0] == indent[:len(in_doc[0])]:
+				indent = in_doc[1] + indent[len(in_doc[0]):]
+		else:
 			if "\t" in indent:
 				if tab_space:
 					indent = indent.replace("\t", " " * tab_space)
 				else:
 					tab_lines += [line_no]
 			indent = indent.replace(" " * space_tab, "\t")
+		if indent:
 			if "\t" in indent and indent[-1:] == " ":
 				space_lines += [line_no]
 			if " \t" in indent:
 				issue_lines += [line_no]
 			line = indent + remain
+		if ndoc & 1:
+			if in_doc:
+				in_doc = None
+			elif r:
+				in_doc = (r.group(0), indent)
+			else:
+				in_doc = ("", "")
 		ofp.write(line)
 	ifp.close()
 	ofp.close()
