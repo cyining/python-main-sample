@@ -4,6 +4,7 @@
 Usage: %s [options] <input-file-name> [output-file-name]
 Options:
 """
+import os
 import os.path
 
 def frame_suffix(fname, suffix="", ext=".py"):
@@ -16,6 +17,7 @@ def main(argv):
 	from getopt import getopt
 	topts = []
 	topts += [("h", "Show help")]
+	topts += [("i:", "Convert inplace and move original to <d:e>")]
 	sopts = "".join(x for x, _ in topts)
 	opts, args = getopt(argv[1:], sopts)
 	def _init(sel_sopt, val_type=int):
@@ -25,11 +27,25 @@ def main(argv):
 				if l >= 0 and l < r:
 					return val_type(text[l+1:r])
 	show_help = False
+	move_dir, move_ext = None, None
 	if not args:
 		show_help = True
 	for k, v in opts:
 		if k == "-h":
 			show_help = True
+		elif k == "-i":
+			if v.count(":") != 1:
+				print("-i require format 'dir:ext'")
+				return 2
+			move_dir, move_ext = v.split(":")
+			if not move_dir and not move_ext:
+				print("-i <dir:ext> require either 'dir' or 'ext' non-empty")
+				return 2
+			if move_dir and not os.path.isdir(move_dir):
+				print("Directory not exist: %s" % move_dir)
+				return 2
+			if move_ext and not "." in move_ext:
+				move_ext = "." + move_ext
 	if show_help:
 		def _help(sopt, text):
 			v = ""
@@ -58,6 +74,15 @@ def main(argv):
 		ofp.write(line)
 	ifp.close()
 	ofp.close()
+	if move_dir or move_ext:
+		nfname = ifname
+		if move_dir:
+			nfname = os.path.join(move_dir, os.path.basename(nfname))
+		if move_ext:
+			nfname += move_ext
+		os.rename(ifname, nfname)
+		os.rename(ofname, ifname)
+		print("Convert inplace and backup to %s" % nfname)
 	return 0
 
 if __name__ == "__main__":
