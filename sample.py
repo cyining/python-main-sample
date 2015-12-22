@@ -11,6 +11,12 @@ def main(argv):
 	topts += [("h", "Show help")]
 	sopts = "".join(x for x, _ in topts)
 	opts, args = getopt(argv[1:], sopts)
+	def _init(sel_sopt, val_type=int):
+		for sopt, text in topts:
+			if sel_sopt == sopt[0] and sopt[-1:] == ":":
+				l, r = text.rfind("("), text.rfind(")")
+				if l >= 0 and l < r:
+					return val_type(text[l+1:r])
 	show_help = False
 	if not args:
 		show_help = True
