@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-"""Python sample application
+"""Python code re-tab tool
 2015'12/20 by Cherng-Ying Ing <cying.ing@gmail.com>
 Usage: %s [options] <input-file-name> [output-file-name]
 Options:
 """
 import os
 import os.path
+import re
 
 def frame_suffix(fname, suffix="", ext=".py"):
 	fbase, fext = os.path.splitext(fname)
@@ -13,10 +14,35 @@ def frame_suffix(fname, suffix="", ext=".py"):
 		fext += ext
 	return fbase + suffix + fext
 
+def str_ranges(nums):
+	msg = ""
+	first = last = None
+	def token():
+		sep = ""
+		if msg:
+			sep = " "
+		if first == last:
+			return sep + "%d" % first
+		return sep + "%d~%d" % (first, last)
+	for num in nums:
+		if last == None:
+			first = last = num
+			continue
+		if num == last + 1:
+			last += 1
+			continue
+		msg += token()
+		first = last = None
+	if last != None:
+		msg += token()
+	return msg
+
 def main(argv):
 	from getopt import getopt
 	topts = []
 	topts += [("h", "Show help")]
+	topts += [("t:", "Treat each existing tab as <n> spaces")]
+	topts += [("n:", "Convert <n> spaces to one tab (4)")]
 	topts += [("i:", "Convert inplace and move original to <d:e>")]
 	sopts = "".join(x for x, _ in topts)
 	opts, args = getopt(argv[1:], sopts)
@@ -27,12 +53,24 @@ def main(argv):
 				if l >= 0 and l < r:
 					return val_type(text[l+1:r])
 	show_help = False
+	tab_space = 0
+	space_tab = _init("n")
 	move_dir, move_ext = None, None
 	if not args:
 		show_help = True
 	for k, v in opts:
 		if k == "-h":
 			show_help = True
+		elif k == "-t":
+			tab_space = int(v)
+			if tab_space not in range(9):
+				print("-t accept values between 1~8")
+				return 2
+		elif k == "-n":
+			space_tab = int(v)
+			if space_tab not in range(9):
+				print("-n accept values between 1~8")
+				return 2
 		elif k == "-i":
 			if v.count(":") != 1:
 				print("-i require format 'dir:ext'")
@@ -70,10 +108,40 @@ def main(argv):
 		return 2
 	ifp = open(ifname, "rt")
 	ofp = open(ofname, "wt")
+	rp_indent = re.compile("^[ \t]+")
+	tab_lines = []
+	space_lines = []
+	issue_lines = []
+	line_no = 0
 	for line in ifp:
+		line_no += 1
+		r = rp_indent.search(line)
+		if r:
+			indent = r.group(0)
+			remain = line[r.end():]
+			if "\t" in indent:
+				if tab_space:
+					indent = indent.replace("\t", " " * tab_space)
+				else:
+					tab_lines += [line_no]
+			indent = indent.replace(" " * space_tab, "\t")
+			if "\t" in indent and indent[-1:] == " ":
+				space_lines += [line_no]
+			if " \t" in indent:
+				issue_lines += [line_no]
+			line = indent + remain
 		ofp.write(line)
 	ifp.close()
 	ofp.close()
+	if tab_lines:
+		print("* Lines with existing tabs: (Consider use -t)")
+		print("  " + str_ranges(tab_lines))
+	if space_lines:
+		print("* Lines with spaces left:")
+		print("  " + str_ranges(space_lines))
+	if issue_lines:
+		print("* Lines with spaces 'in the middle' left:")
+		print("  " + str_ranges(issue_lines))
 	if move_dir or move_ext:
 		nfname = ifname
 		if move_dir:
