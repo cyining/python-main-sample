@@ -7,7 +7,7 @@ Options:
 import os
 import os.path
 
-def frame_suffix(fname, suffix="", ext=".py"):
+def frame_suffix(fname, suffix="", ext=""):
 	fbase, fext = os.path.splitext(fname)
 	if not fext or fext.lower() != ext:
 		fext += ext
