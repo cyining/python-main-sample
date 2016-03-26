@@ -26,6 +26,14 @@ def tail_cut(line, tail_chrs):
 crlf_chrs = "\r\n"
 tail_chrs = " \t"
 
+def line_cut(ifp, cut_chr="\r"):
+	for line in ifp:
+		text, crlf = tail_cut(line, crlf_chrs)
+		segs = text.split(cut_chr)
+		for i in range(len(segs) - 1):
+			yield segs[i] + cut_chr
+		yield segs[-1] + crlf
+
 def frame_suffix(fname, suffix="", ext=""):
 	fbase, fext = os.path.splitext(fname)
 	if not fext or fext.lower() != ext:
@@ -108,7 +116,7 @@ def main(argv):
 	ifp = open(ifname, "rt")
 	if output:
 		ofp = open(ofname, "wt")
-	for line in ifp:
+	for line in line_cut(ifp):
 		text, crlf = tail_cut(line, crlf_chrs)
 		#print(repr((text, crlf)))
 		if crlf not in counts:
