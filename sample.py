@@ -17,6 +17,7 @@ def main(argv):
 	from getopt import getopt
 	topts = []
 	topts += [("h", "Show help")]
+	topts += [("o", "Generate output file (False)")]
 	topts += [("i:", "Convert inplace and move original to <d:e>")]
 	sopts = "".join(x for x, _ in topts)
 	opts, args = getopt(argv[1:], sopts)
@@ -27,12 +28,15 @@ def main(argv):
 				if l >= 0 and l < r:
 					return val_type(text[l+1:r])
 	show_help = False
+	output = _init("o")
 	move_dir, move_ext = None, None
 	if not args:
 		show_help = True
 	for k, v in opts:
 		if k == "-h":
 			show_help = True
+		elif k == "-o":
+			output = True
 		elif k == "-i":
 			if v.count(":") != 1:
 				print("-i require format 'dir:ext'")
@@ -69,11 +73,14 @@ def main(argv):
 		print("Input and output files must be different")
 		return 2
 	ifp = open(ifname, "rt")
-	ofp = open(ofname, "wt")
+	if output:
+		ofp = open(ofname, "wt")
 	for line in ifp:
-		ofp.write(line)
+		if output:
+			ofp.write(line)
 	ifp.close()
-	ofp.close()
+	if output:
+		ofp.close()
 	if move_dir or move_ext:
 		nfname = ifname
 		if move_dir:
