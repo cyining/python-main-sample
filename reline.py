@@ -16,12 +16,9 @@ def tail_cut(line, tail_chrs):
 
 	Return a tuple containing the leading and tailing parts
 	"""
-	size = len(line)
-	for i in range(size-1, -1, -1):
-		if line[i] not in tail_chrs:
-			cut = i + 1
-			return line[:cut], line[cut:]
-	return "", line
+	lead = line.rstrip(tail_chrs)
+	tail = line[len(lead):]
+	return lead, tail
 
 crlf_chrs = "\r\n"
 tail_chrs = " \t"
